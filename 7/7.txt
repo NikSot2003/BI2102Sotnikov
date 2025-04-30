@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart'; // Импорт фреймворка Flutter для построения интерфейса
+
+// Главная функция запуска приложения
+void main() {
+  runApp(const MyApp()); // Запускаем виджет MyApp как корневой
+}
+
+// Главный виджет приложения
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override 
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Навигация и передача данных', // Заголовок приложения
+      theme: ThemeData(
+        primarySwatch: Colors.blue, // Основная цветовая тема приложения
+      ),
+      // Определение маршрутов навигации
+      routes: {
+        '/': (context) => const FirstScreen(), // Корневой маршрут — первый экран
+        '/second': (context) => const SecondScreen(), // Второй маршрут — второй экран
+      },
+    );
+  }
+}
+
+// Первый экран (начальный экран приложения)
+class FirstScreen extends StatelessWidget {
+  const FirstScreen({Key? key}) : super(key: key);
+
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Возвращение значения'), // Заголовок в верхней панели
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0), // Отступы внутри тела экрана
+        child: Column(
+          children: [
+            const SizedBox(height: 20), // Отступ сверху
+            ElevatedButton(
+              onPressed: () async {
+                // Переход на второй экран и ожидание результата
+                final result = await Navigator.pushNamed(context, '/second');
+                if (result != null) {
+                  // Если результат получен, показать его во всплывающем сообщении
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Вы выбрали: $result'), // Вывод результата
+                    ),
+                  );
+                }
+              },
+              child: const Text('Перейти к выбору'), // Текст кнопки
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Второй экран (экран с выбором)
+class SecondScreen extends StatelessWidget {
+  const SecondScreen({Key? key}) : super(key: key);
+
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Выберите любой вариант'), // Заголовок второго экрана
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0), // Отступы
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Возврат значения "Да" на первый экран
+                Navigator.pop(context, 'Да');
+              },
+              child: const Text('Да'), // Текст кнопки
+            ),
+            const SizedBox(height: 10), // Отступ между кнопками
+            ElevatedButton(
+              onPressed: () {
+                // Возврат значения "Нет" на первый экран
+                Navigator.pop(context, 'Нет');
+              },
+              child: const Text('Нет'), // Текст кнопки
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
