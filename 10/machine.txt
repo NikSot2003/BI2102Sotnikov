@@ -1,0 +1,31 @@
+// Импорт абстрактного класса Coffee и его реализаций из файла Coffee.dart
+import 'Coffee.dart';
+
+// Класс кофемашины, который управляет ресурсами и приготовлением напитков.
+class Machine {
+  int water = 1000; // Количество воды в кофемашине (мл)
+  int coffeeBeans = 500; // Количество кофейных зёрен (г)
+  int milk = 500; // Количество молока в кофемашине (мл)
+  double cash = 0; // Сумма в кассе кофемашины
+
+  // Метод для приготовления кофе, проверяет, хватает ли ресурсов.
+  bool makeCoffee(Coffee coffee) {
+    // Проверка, хватает ли воды, зёрен и молока для приготовления напитка
+    if (water >= coffee.water && coffeeBeans >= coffee.beans && milk >= coffee.milk) {
+      // Если хватает ресурсов, уменьшаем их
+      water -= coffee.water;
+      coffeeBeans -= coffee.beans;
+      milk -= coffee.milk;
+      // Добавляем сумму за напиток в кассу
+      cash += coffee.price;
+      return true; // Кофе успешно приготовлен
+    }
+    return false; // Ресурсов не хватает, не удается приготовить кофе
+  }
+
+  // Метод для получения текущего статуса кофемашины (ресурсы и сумма в кассе)
+  String getStatus() {
+    return 'Вода: $water мл\nЗёрна: $coffeeBeans г\nМолоко: $milk мл\nКасса: \$${cash.toStringAsFixed(2)}';
+  }
+}
+

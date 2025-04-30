@@ -1,0 +1,66 @@
+class Machine {
+  // Приватные поля
+  int _coffeeBeans = 0;  // Количество кофейных зерен
+  int _milk = 0;  // Количество молока
+  int _water = 0;  // Количество воды
+  double _cash = 0;  // Сумма денег в кассе
+
+  // Геттеры и сеттеры для доступа к приватным полям
+  int get coffeeBeans => _coffeeBeans;  // Получение количества кофейных зерен
+  set coffeeBeans(int value) => _coffeeBeans = value;  // Установка количества кофейных зерен
+
+  int get milk => _milk;  // Получение количества молока
+  set milk(int value) => _milk = value;  // Установка количества молока
+
+  int get water => _water;  // Получение количества воды
+  set water(int value) => _water = value;  // Установка количества воды
+
+  double get cash => _cash;  // Получение суммы в кассе
+  set cash(double value) => _cash = value;  // Установка суммы в кассе
+
+  // Метод для проверки доступности ресурсов для приготовления кофе
+  bool isAvailable({required int needWater, required int needBeans, required int needMilk}) {
+    // Проверяем, достаточно ли ресурсов для приготовления
+    return _water >= needWater && _coffeeBeans >= needBeans && _milk >= needMilk;
+  }
+
+  // Закрытый метод для уменьшения ресурсов после приготовления кофе
+  void _subtractResources(int w, int b, int m) {
+    _water -= w;  // Уменьшаем количество воды
+    _coffeeBeans -= b;  // Уменьшаем количество кофейных зерен
+    _milk -= m;  // Уменьшаем количество молока
+  }
+
+  // Метод для приготовления кофе
+  bool makingCoffee({required int waterRequired, required int beansRequired, required int milkRequired, required double price}) {
+    if (!isAvailable(needWater: waterRequired, needBeans: beansRequired, needMilk: milkRequired)) return false;
+    // Проверяем доступность ресурсов, если ресурсов недостаточно, возвращаем false
+    _subtractResources(waterRequired, beansRequired, milkRequired);  // Уменьшаем количество ресурсов
+    _cash += price;  // Добавляем стоимость напитка в кассу
+    return true;  // Возвращаем true, если кофе приготовлено успешно
+  }
+
+  // Методы для приготовления каждого типа кофе, используют общий метод makingCoffee
+  bool makeEspresso() {
+    return makingCoffee(waterRequired: 50, beansRequired: 20, milkRequired: 0, price: 2.5);  // Эспрессо
+  }
+
+  bool makeCappuccino() {
+    return makingCoffee(waterRequired: 100, beansRequired: 20, milkRequired: 50, price: 3.0);  // Капучино
+  }
+
+  bool makeLatte() {
+    return makingCoffee(waterRequired: 100, beansRequired: 20, milkRequired: 100, price: 3.5);  // Латте
+  }
+
+  // Метод для получения текущего статуса машины
+  String getStatus() {
+    // Возвращаем строку с текущими ресурсами и суммой в кассе
+    return '''
+Вода: $_water мл
+Зёрна: $_coffeeBeans г
+Молоко: $_milk мл
+Касса: \$$_cash
+''';
+  }
+}

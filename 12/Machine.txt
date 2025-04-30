@@ -1,0 +1,46 @@
+// Импортируем классы для напитков
+import 'Coffee.dart';
+import 'AsyncMethods.dart';
+
+// Класс кофемашины, который управляет ресурсами и приготовлением напитков.
+class Machine {
+  int water = 1000; // Количество воды в кофемашине (мл)
+  int coffeeBeans = 500; // Количество кофейных зёрен (г)
+  int milk = 500; // Количество молока в кофемашине (мл)
+  double cash = 0; // Сумма в кассе кофемашины
+  late AsyncMethods asyncMethods; // Асинхронный менеджер
+
+  // Конструктор, который инициализирует асинхронные методы
+  Machine() {
+    asyncMethods = AsyncMethods(this); 
+  }
+
+  // Метод для приготовления кофе, проверяет, хватает ли ресурсов.
+  Future<bool> makeCoffee(Coffee coffee) async {
+    // Проверка, хватает ли воды, зёрен и молока для приготовления напитка
+    if (water >= coffee.water && coffeeBeans >= coffee.beans && milk >= coffee.milk) {
+      // Если хватает ресурсов, уменьшаем их
+      water -= coffee.water;
+      coffeeBeans -= coffee.beans;
+      milk -= coffee.milk;
+      // Добавляем сумму за напиток в кассу
+      cash += coffee.price;
+      
+      // Вызов асинхронных методов
+      await asyncMethods.heatWater();
+      await asyncMethods.brewCoffee();
+      if (coffee.milk > 0) {
+        await asyncMethods.frothMilk();
+      }
+      await asyncMethods.mixCoffeeAndMilk();
+      
+      return true; // Кофе успешно приготовлен
+    }
+    return false; // Ресурсов не хватает, не удается приготовить кофе
+  }
+
+  // Метод для получения текущего статуса кофемашины (ресурсы и сумма в кассе)
+  String getStatus() {
+    return 'Вода: $water мл\nЗёрна: $coffeeBeans г\nМолоко: $milk мл\nКасса: \$${cash.toStringAsFixed(2)}';
+  }
+}

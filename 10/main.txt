@@ -1,0 +1,221 @@
+// Подключение библиотек Flutter для работы с виджетами и UI
+import 'package:flutter/material.dart';
+// Импорт классов для кофемашины и напитков
+import 'Machine.dart';
+import 'Coffee.dart';
+
+// Основная функция приложения, которая запускает приложение
+void main() => runApp(const MyApp());
+
+// Основной виджет приложения, который использует StatelessWidget
+class MyApp extends StatelessWidget {
+  const MyApp({super.key}); // Конструктор без состояния
+
+  @override
+  Widget build(BuildContext context) {
+    // Строим приложение с заданной темой и домашней страницей
+    return MaterialApp(
+      title: 'Кофемашина', // Название приложения
+      theme: ThemeData(
+        primarySwatch: Colors.brown, // Основной цвет темы (коричневый)
+        textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 18)), // Установка размера шрифта по умолчанию
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 89, 26, 3), // Цвет фона кнопки
+            foregroundColor: const Color.fromARGB(255, 197, 191, 191), // Цвет текста на кнопке
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // Отступы внутри кнопки
+            elevation: 5, // Тень кнопки
+            shadowColor: Colors.black.withOpacity(0.2), // Цвет тени с прозрачностью
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12), // Скругление углов кнопки
+            ),
+          ),
+        ),
+      ),
+      home: const CoffeeMachinePage(), // Главная страница приложения
+      debugShowCheckedModeBanner: false, // Отключение баннера отладки
+    );
+  }
+}
+
+// Страница кофемашины, которая использует StatefulWidget для состояния
+class CoffeeMachinePage extends StatefulWidget {
+  const CoffeeMachinePage({super.key});
+
+  @override
+  State<CoffeeMachinePage> createState() => _CoffeeMachinePageState();
+}
+
+// Класс состояния кофемашины
+class _CoffeeMachinePageState extends State<CoffeeMachinePage> {
+  final Machine machine = Machine(); // Экземпляр кофемашины
+  String status = 'Выберите напиток'; // Начальный статус
+
+  // Метод для приготовления кофе
+  void _makeCoffee(Coffee coffee, String name) {
+    setState(() {
+      // Приготовление кофе, если ресурсов достаточно
+      status = machine.makeCoffee(coffee)
+          ? '$name готов! Цена: \$${coffee.price.toStringAsFixed(2)}'
+          : 'Недостаточно ресурсов!'; // Статус с ценой или сообщением о недостатке ресурсов
+    });
+  }
+
+  // Метод для пополнения ресурсов
+  void _addResources() {
+    setState(() {
+      // Добавление ресурсов
+      machine.water += 300;
+      machine.coffeeBeans += 150;
+      machine.milk += 200; // Добавляем молоко
+      status = 'Ресурсы добавлены!'; // Обновление статуса
+    });
+  }
+
+  // Метод для обнуления кассы
+  void _resetCash() {
+    setState(() {
+      machine.cash = 0; // Обнуляем кассу
+      status = 'Касса обнулена!'; // Обновление статуса
+    });
+  }
+
+  // Метод для отображения текущего статуса кофемашины
+  void _showStatus() {
+    setState(() {
+      status = machine.getStatus(); // Получаем статус кофемашины
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Строим UI страницы кофемашины
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Кофемашина'), // Название приложения на панели
+        backgroundColor: Colors.brown[700], // Цвет фона панели
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0), // Отступы вокруг содержимого
+        child: Column(
+          children: [
+            // Контейнер с информацией о ресурсах
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50], // Цвет фона контейнера
+                borderRadius: BorderRadius.circular(10), // Скругление углов
+                border: Border.all(color: Colors.blue, width: 2), // Рамка вокруг контейнера
+              ),
+              child: Column(
+                children: [
+                  const Text('Ресурсы:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // Заголовок
+                  const SizedBox(height: 10), // Отступ
+                  Text('Вода: ${machine.water} мл', style: const TextStyle(fontSize: 16)), // Вода
+                  Text('Зёрна: ${machine.coffeeBeans} г', style: const TextStyle(fontSize: 16)), // Кофейные зёрна
+                  Text('Молоко: ${machine.milk} мл', style: const TextStyle(fontSize: 16)), // Молоко
+                ],
+              ),
+            ),
+            const SizedBox(height: 10), // Отступ между элементами
+            // Отображение текущего статуса
+            Text(
+              status,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20), // Отступ
+            // Блок с кнопками для выбора напитка
+            Expanded(
+              child: Center(
+                child: Wrap(
+                  spacing: 12, // Отступы между кнопками по горизонтали
+                  runSpacing: 12, // Отступы между кнопками по вертикали
+                  alignment: WrapAlignment.center, // Выравнивание кнопок по центру
+                  children: [
+                    _buildDrinkButton('Эспрессо', Espresso()), // Кнопка для Эспрессо
+                    _buildDrinkButton('Американо', Americano()), // Кнопка для Американо
+                    _buildDrinkButton('Латте', Latte()), // Кнопка для Латте
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10), // Отступ
+            // Блок с кнопками для управления ресурсами и статусом
+            Column(
+              children: [
+                _buildActionButton('Пополнить', _addResources), // Кнопка для пополнения ресурсов
+                const SizedBox(height: 10), // Отступ
+                _buildActionButton('Обнулить кассу', _resetCash), // Кнопка для обнуления кассы
+                const SizedBox(height: 10), // Отступ
+                _buildActionButton('Статус', _showStatus), // Кнопка для отображения статуса
+              ],
+            ),
+            const SizedBox(height: 20), // Отступ
+            // Контейнер с информацией о кассе
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange[50], // Цвет фона контейнера
+                borderRadius: BorderRadius.circular(10), // Скругление углов
+                border: Border.all(color: Colors.orange, width: 2), // Рамка вокруг контейнера
+              ),
+              child: Text(
+                'Общая сумма в кассе: \$${machine.cash.toStringAsFixed(2)}', // Отображение суммы в кассе
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Метод для создания кнопки действия (пополнение, обнуление, статус)
+  Widget _buildActionButton(String label, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed, // Действие при нажатии
+      child: Text(label), // Текст на кнопке
+      style: ElevatedButton.styleFrom(minimumSize: const Size(200, 60)), // Минимальный размер кнопки
+    );
+  }
+
+  // Метод для создания кнопки напитка
+  Widget _buildDrinkButton(String name, Coffee coffee) {
+    return Column(
+      children: [
+        ElevatedButton(onPressed: () => _makeCoffee(coffee, name), child: Text(name)), // Кнопка для напитка
+        const SizedBox(height: 8), // Отступ
+        // Отображение цены напитка
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.brown[50], // Цвет фона
+            borderRadius: BorderRadius.circular(8), // Скругление углов
+            border: Border.all(color: Colors.brown, width: 1), // Рамка вокруг контейнера
+          ),
+          child: Text(
+            'Цена: \$${coffee.price.toStringAsFixed(2)}', // Цена напитка
+            style: const TextStyle(fontSize: 16, color: Colors.brown, fontWeight: FontWeight.w500),
+          ),
+        ),
+        const SizedBox(height: 8), // Отступ
+        // Отображение необходимых ресурсов для напитка
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[100], // Цвет фона
+            borderRadius: BorderRadius.circular(8), // Скругление углов
+            border: Border.all(color: Colors.grey, width: 1), // Рамка вокруг контейнера
+          ),
+          child: Text(
+            'Необходимые ресурсы:\nВода: ${coffee.water} мл\nЗёрна: ${coffee.beans} г\nМолоко: ${coffee.milk} мл', // Ресурсы
+            style: const TextStyle(fontSize: 14, color: Colors.black),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+}

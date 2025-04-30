@@ -1,0 +1,260 @@
+import 'package:flutter/material.dart'; // Импорт библиотеки Flutter для UI
+import 'Machine.dart'; // Импорт файла с логикой кофемашины
+import 'Coffee.dart'; // Импорт файла с классами кофе
+
+void main() => runApp(const MyApp()); // Точка входа в приложение: запускается виджет MyApp
+
+// Основной виджет приложения
+class MyApp extends StatelessWidget {
+  const MyApp({super.key}); // Конструктор с ключом для идентификации виджета
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Кофемашина', // Название приложения
+      theme: ThemeData(
+        primarySwatch: Colors.brown, // Основная цветовая тема
+      ),
+      home: const CoffeeMachineHomePage(), // Главная страница приложения
+      debugShowCheckedModeBanner: false, // Убираем баннер "debug"
+    );
+  }
+}
+
+// Главная страница с вкладками
+class CoffeeMachineHomePage extends StatefulWidget {
+  const CoffeeMachineHomePage({super.key}); // Конструктор
+
+  @override
+  State<CoffeeMachineHomePage> createState() => _CoffeeMachineHomePageState(); // Создание состояния
+}
+
+// Состояние главной страницы
+class _CoffeeMachineHomePageState extends State<CoffeeMachineHomePage> with SingleTickerProviderStateMixin {
+  final Machine machine = Machine(); // Создание экземпляра кофемашины
+
+  // Контроллеры для ввода данных пользователем
+  final TextEditingController _paymentController = TextEditingController();
+  final TextEditingController _waterController = TextEditingController();
+  final TextEditingController _beansController = TextEditingController();
+  final TextEditingController _milkController = TextEditingController();
+
+  String selectedCoffeeName = ''; // Имя выбранного напитка
+  Coffee? selectedCoffee; // Объект выбранного напитка
+  String status = 'Выберите напиток'; // Текст статуса
+  String changeMessage = ''; // Сообщение о сдаче
+
+  // Метод выбора кофе
+  void _selectCoffee(String name, Coffee coffee) {
+    setState(() {
+      selectedCoffeeName = name; // Устанавливаем название
+      selectedCoffee = coffee; // Сохраняем объект кофе
+      status = 'Выбран напиток: $name, цена: \$${coffee.price.toStringAsFixed(2)}'; // Обновляем статус
+      changeMessage = ''; // Очищаем сообщение о сдаче
+      _paymentController.clear(); // Очищаем поле ввода оплаты
+    });
+  }
+
+  // Метод оплаты и приготовления кофе
+  void _processPayment() async {
+    if (selectedCoffee == null) {
+      setState(() {
+        status = 'Выберите напиток!'; // Ошибка: напиток не выбран
+      });
+      return;
+    }
+
+    double? payment = double.tryParse(_paymentController.text); // Пытаемся преобразовать ввод в число
+
+    if (payment == null) {
+      setState(() {
+        status = 'Введите корректную сумму!'; // Некорректный ввод
+      });
+      return;
+    }
+    if (payment <= 0) {
+      setState(() {
+        status = 'Сумма должна быть больше нуля!';
+      });
+      return;
+    }
+    if (payment < selectedCoffee!.price) {
+      setState(() {
+        status = 'Недостаточно средств!';
+      });
+      return;
+    }
+
+    setState(() {
+      status = 'Приготовление $selectedCoffeeName...'; // Сообщаем, что идет приготовление
+    });
+
+    bool success = await machine.makeCoffee(selectedCoffee!); // Пытаемся приготовить кофе
+
+    if (success) {
+      double change = payment - selectedCoffee!.price; // Расчет сдачи
+      setState(() {
+        status = '$selectedCoffeeName готов!'; // Успех
+        changeMessage = 'Сдача: \$${change.toStringAsFixed(2)}'; // Сообщение о сдаче
+      });
+    } else {
+      setState(() {
+        status = 'Недостаточно ресурсов!'; // Ошибка приготовления
+        changeMessage = '';
+      });
+    }
+  }
+
+  // Метод пополнения ресурсов
+  void _refillResources() {
+    int? water = int.tryParse(_waterController.text); // Парсим воду
+    int? beans = int.tryParse(_beansController.text); // Парсим зерна
+    int? milk = int.tryParse(_milkController.text); // Парсим молоко
+
+    if ((water == null || water <= 0) && (beans == null || beans <= 0) && (milk == null || milk <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите корректные значения для пополнения ресурсов!')), // Ошибка при вводе
+      );
+      return;
+    }
+
+    setState(() {
+      if (water != null && water > 0) machine.water += water; // Пополнение воды
+      if (beans != null && beans > 0) machine.coffeeBeans += beans; // Пополнение зерен
+      if (milk != null && milk > 0) machine.milk += milk; // Пополнение молока
+      status = 'Ресурсы успешно пополнены!';
+    });
+
+    // Очищаем поля ввода
+    _waterController.clear();
+    _beansController.clear();
+    _milkController.clear();
+  }
+
+  @override
+  void dispose() {
+    // Освобождение ресурсов контроллеров
+    _paymentController.dispose();
+    _waterController.dispose();
+    _beansController.dispose();
+    _milkController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2, // Две вкладки
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Кофемашина'), // Заголовок приложения
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Заказ кофе', icon: Icon(Icons.coffee)), // Первая вкладка
+              Tab(text: 'Ресурсы', icon: Icon(Icons.settings)), // Вторая вкладка
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Вкладка заказа кофе
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Text(status, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // Статус
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      _buildCoffeeButton('Эспрессо', Espresso()), // Кнопка Эспрессо
+                      _buildCoffeeButton('Американо', Americano()), // Кнопка Американо
+                      _buildCoffeeButton('Латте', Latte()), // Кнопка Латте
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _paymentController, // Поле для ввода оплаты
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Введите сумму оплаты',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _processPayment, // Обработка оплаты
+                    child: const Text('Приготовить'),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(changeMessage, style: const TextStyle(fontSize: 16, color: Colors.green)), // Сообщение о сдаче
+                ],
+              ),
+            ),
+            // Вкладка ресурсов
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const Text('Текущие ресурсы:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    _buildResourceInfo('Вода', '${machine.water} мл'), // Информация о воде
+                    _buildResourceInfo('Зерна', '${machine.coffeeBeans} г'), // Информация о зернах
+                    _buildResourceInfo('Молоко', '${machine.milk} мл'), // Информация о молоке
+                    const SizedBox(height: 20),
+                    const Text('Пополнение ресурсов:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    _buildRefillField('Вода (мл)', _waterController), // Поле ввода воды
+                    const SizedBox(height: 10),
+                    _buildRefillField('Зерна (г)', _beansController), // Поле ввода зерен
+                    const SizedBox(height: 10),
+                    _buildRefillField('Молоко (мл)', _milkController), // Поле ввода молока
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _refillResources, // Кнопка пополнения
+                      child: const Text('Пополнить'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Создание кнопки выбора кофе
+  Widget _buildCoffeeButton(String name, Coffee coffee) {
+    return ElevatedButton(
+      onPressed: () => _selectCoffee(name, coffee), // Выбор кофе
+      child: Text('$name\n\$${coffee.price.toStringAsFixed(2)}', textAlign: TextAlign.center),
+      style: ElevatedButton.styleFrom(minimumSize: const Size(100, 60)), // Размер кнопки
+    );
+  }
+
+  // Вывод информации о текущих ресурсах
+  Widget _buildResourceInfo(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 16)), // Название ресурса
+        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), // Значение ресурса
+      ],
+    );
+  }
+
+  // Создание поля ввода для пополнения ресурсов
+  Widget _buildRefillField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller, // Контроллер для поля
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(), // Граница поля ввода
+      ),
+    );
+  }
+}
